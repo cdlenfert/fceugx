@@ -193,6 +193,8 @@ static void SetInput(void) {
 		{0x5ee6008e,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	// Mechanized Attack
 		{0x370ceb65,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	// Meiro Dai Sakusen
 		{0x3a1694f9,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_4PLAYER	},	// Nekketsu Kakutou Densetsu
+		{0x4e959e25,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_4PLAYER	},	// Super Dodge Ball (USA) (4 Players Patch) - full file CRC
+		{0xb20c55a3,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_4PLAYER	},	// Super Dodge Ball (USA) (4 Players Patch) - ROM data CRC
 		{0x9d048ea4,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_OEKAKIDS	},	// Oeka Kids
 		{0x2a6559a1,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	// Operation Wolf (J)
 		{0xedc3662b,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	// Operation Wolf
@@ -230,8 +232,16 @@ static void SetInput(void) {
 
 	int x = 0;
 
+	char msg[100];
+	sprintf(msg, "CRC: %08x", iNESGameCRC32);
+	FCEU_DispMessage(msg, 0);
+	
+	FCEU_printf("SetInput called, ROM CRC32: 0x%08x\n", iNESGameCRC32);
+
 	while (moo[x].input1 >= 0 || moo[x].input2 >= 0 || moo[x].inputfc >= 0) {
 		if (moo[x].crc32 == iNESGameCRC32) {
+			FCEU_printf("MATCH FOUND! Setting inputfc to %d\n", moo[x].inputfc);
+			FCEUI_DispMessage("===CRC MATCH!===", 0);
 			GameInfo->input[0] = moo[x].input1;
 			GameInfo->input[1] = moo[x].input2;
 			GameInfo->inputfc = moo[x].inputfc;
@@ -239,6 +249,10 @@ static void SetInput(void) {
 		}
 		x++;
 	}
+	
+	sprintf(msg, "fc=%d (1=ARKANOID 3=4PLAYER)", GameInfo->inputfc);
+	FCEUI_DispMessage(msg, 0);
+	FCEU_printf("After SetInput, GameInfo->inputfc = %d\n", GameInfo->inputfc);
 }
 
 struct INPSEL_NES20 {
@@ -1046,8 +1060,8 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 	}
 
 	SetInput();
-	// Input can be overriden by NES 2.0 header
-	if (iNES2) SetInputNes20(head.expansion);
+	// Input can be overriden by NES 2.0 header ONLY if CRC didn't already set it
+	if (iNES2 && GameInfo->inputfc == SIFC_UNSET) SetInputNes20(head.expansion);
 	CheckHInfo(partialmd5);
 	FCEU_VSUniCheck(partialmd5, &MapperNo, &Mirroring);
 	CheckBad(partialmd5);

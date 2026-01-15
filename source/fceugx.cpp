@@ -182,7 +182,7 @@ void ShutdownCB()
 {
 	ShutdownRequested = 1;
 }
-void ResetCB()
+void ResetCB(u32 irq, void* ctx)
 {
 	ResetRequested = 1;
 }

@@ -192,7 +192,13 @@ void SetControllers()
 
 	InputDPR = &JSReturn;
 
-	if(GCSettings.Controller == CTRL_PAD4)
+	// Auto-configure Famicom expansion port for 4-player games
+	if(GameInfo->inputfc == SIFC_4PLAYER)
+	{
+		FCEUI_SetInputFourscore(0); // Disable FourScore when using Famicom 4-player
+		FCEUI_SetInputFC(SIFC_4PLAYER, InputDPR, 0);
+	}
+	else if(GCSettings.Controller == CTRL_PAD4)
 		FCEUI_SetInputFourscore(1);
 	else
 		FCEUI_SetInputFourscore(0);

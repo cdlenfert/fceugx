@@ -193,6 +193,8 @@ static void SetInput(void) {
 		{0x5ee6008e,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	// Mechanized Attack
 		{0x370ceb65,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	// Meiro Dai Sakusen
 		{0x3a1694f9,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_4PLAYER	},	// Nekketsu Kakutou Densetsu
+		{0x4e959e25,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_4PLAYER	},	// Super Dodge Ball (USA) (4 Players Patch) - full file CRC
+		{0xb20c55a3,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_4PLAYER	},	// Super Dodge Ball (USA) (4 Players Patch) - ROM data CRC
 		{0x9d048ea4,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_OEKAKIDS	},	// Oeka Kids
 		{0x2a6559a1,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	// Operation Wolf (J)
 		{0xedc3662b,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	// Operation Wolf
@@ -1046,8 +1048,8 @@ int iNESLoad(const char *name, FCEUFILE *fp, int OverwriteVidMode) {
 	}
 
 	SetInput();
-	// Input can be overriden by NES 2.0 header
-	if (iNES2) SetInputNes20(head.expansion);
+	// Input can be overriden by NES 2.0 header ONLY if CRC didn't already set it
+	if (iNES2 && GameInfo->inputfc == SIFC_UNSET) SetInputNes20(head.expansion);
 	CheckHInfo(partialmd5);
 	FCEU_VSUniCheck(partialmd5, &MapperNo, &Mirroring);
 	CheckBad(partialmd5);

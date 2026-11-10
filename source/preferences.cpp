@@ -20,6 +20,9 @@
 #include "fceugx.h"
 #include "filelist.h"
 #include "button_mapping.h"
+
+// bump when saved Wii controller button values change meaning (see migrateController)
+#define WPAD_LAYOUT "2"
 #include "filebrowser.h"
 #include "menu.h"
 #include "fileop.h"
@@ -119,6 +122,7 @@ preparePrefsData ()
 	data = mxmlNewElement(xml, "file");
 	mxmlElementSetAttr(data, "app", APPNAME);
 	mxmlElementSetAttr(data, "version", APPVERSION);
+	mxmlElementSetAttr(data, "wpadlayout", WPAD_LAYOUT);
 
 	createXMLSection("File", "File Settings");
 
@@ -237,6 +241,31 @@ static void loadXMLSetting(float * var, const char * name)
  * Load XML elements into variables for a controller mapping
  ***************************************************************************/
 
+/****************************************************************************
+ * Wii button value migration
+ *
+ * libogc2 byte-swapped the WPAD button constants within each 16-bit half
+ * (e.g. WPAD_BUTTON_UP 0x0800 -> 0x0008). Wiimote buttons live in the low
+ * half; Classic / Wii U Pro buttons live in the high half. Nunchuk C/Z (high
+ * half) did not change. Settings saved without the "wpadlayout" marker were
+ * written with the old values and must be converted once on load.
+ ***************************************************************************/
+static u32 swapLowHalf(u32 v)
+{
+	return (v & 0xFFFF0000) | ((v & 0x00FF) << 8) | ((v & 0xFF00) >> 8);
+}
+
+static u32 swapHighHalf(u32 v)
+{
+	return (v & 0x0000FFFF) | ((v & 0x00FF0000) << 8) | ((v & 0xFF000000) >> 8);
+}
+
+static void migrateController(u32 controller[], u32 (*swap)(u32))
+{
+	for(int i=0; i < MAXJP; i++)
+		controller[i] = swap(controller[i]);
+}
+
 static void loadXMLController(u32 controller[], const char * name)
 {
 	item = mxmlFindElement(xml, xml, "controller", "name", name, MXML_DESCEND);
@@ -273,9 +302,13 @@ decodePrefsData ()
 	if(xml)
 	{
 		// check settings version
+		bool legacyWpadLayout = true;
 		item = mxmlFindElement(xml, xml, "file", "version", NULL, MXML_DESCEND);
 		if(item) // a version entry exists
 		{
+			const char * layout = mxmlElementGetAttr(item, "wpadlayout");
+			legacyWpadLayout = !(layout && strcmp(layout, WPAD_LAYOUT) == 0);
+
 			const char * version = mxmlElementGetAttr(item, "version");
 
 			if(version && strlen(version) == 5)
@@ -365,6 +398,17 @@ decodePrefsData ()
 			loadXMLController(btnmap[CTRL_PAD][CTRLR_NUNCHUK], "btnmap_pad_nunchuk");
 			loadXMLController(btnmap[CTRL_ZAPPER][CTRLR_GCPAD], "btnmap_zapper_gcpad");
 			loadXMLController(btnmap[CTRL_ZAPPER][CTRLR_WIIMOTE], "btnmap_zapper_wiimote");
+
+#ifdef HW_RVL
+			if(legacyWpadLayout)
+			{
+				migrateController(btnmap[CTRL_PAD][CTRLR_WIIMOTE], swapLowHalf);
+				migrateController(btnmap[CTRL_PAD][CTRLR_NUNCHUK], swapLowHalf);
+				migrateController(btnmap[CTRL_ZAPPER][CTRLR_WIIMOTE], swapLowHalf);
+				migrateController(btnmap[CTRL_PAD][CTRLR_CLASSIC], swapHighHalf);
+				migrateController(btnmap[CTRL_PAD][CTRLR_WUPC], swapHighHalf);
+			}
+#endif
 		}
 		mxmlDelete(xml);
 	}

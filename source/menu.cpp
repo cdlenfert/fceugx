@@ -50,8 +50,6 @@ static GuiImageData * pointer[4];
 #endif
 
 #ifdef HW_RVL
-	#include "mem2.h"
-
 	#define MEM_ALLOC(A) (u8*)mem2_malloc(A)
 	#define MEM_DEALLOC(A) mem2_free(A)
 #else

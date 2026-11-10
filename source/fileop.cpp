@@ -35,10 +35,6 @@
 #include "filebrowser.h"
 #include "gui/gui.h"
 
-#ifdef HW_RVL
-	#include "mem2.h"
-#endif
-
 #define THREAD_SLEEP 100
 
 unsigned char *savebuffer = NULL;

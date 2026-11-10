@@ -198,10 +198,12 @@ void SetControllers()
 		FCEUI_SetInputFourscore(0); // Disable FourScore when using Famicom 4-player
 		FCEUI_SetInputFC(SIFC_4PLAYER, InputDPR, 0);
 	}
-	else if(GCSettings.Controller == CTRL_PAD4)
-		FCEUI_SetInputFourscore(1);
 	else
-		FCEUI_SetInputFourscore(0);
+	{
+		// Detach any expansion device left over from a previously loaded game
+		FCEUI_SetInputFC(SIFC_NONE, NULL, 0);
+		FCEUI_SetInputFourscore(GCSettings.Controller == CTRL_PAD4);
+	}
 
 	// set defaults
 	zapperdata[0]=NULL;

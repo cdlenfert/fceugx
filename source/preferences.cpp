@@ -266,11 +266,12 @@ static void migrateController(u32 controller[], u32 (*swap)(u32))
 		controller[i] = swap(controller[i]);
 }
 
-static void loadXMLController(u32 controller[], const char * name)
+static bool loadXMLController(u32 controller[], const char * name)
 {
 	item = mxmlFindElement(xml, xml, "controller", "name", name, MXML_DESCEND);
+	if(!item)
+		return false;
 
-	if(item)
 	{
 		// populate buttons
 		for(int i=0; i < MAXJP; i++)
@@ -284,6 +285,7 @@ static void loadXMLController(u32 controller[], const char * name)
 			}
 		}
 	}
+	return true;
 }
 
 /****************************************************************************
@@ -391,22 +393,24 @@ decodePrefsData ()
 			loadXMLSetting(&GCSettings.crosshair, "crosshair");
 
 			loadXMLController(btnmap[CTRL_PAD][CTRLR_GCPAD], "btnmap_pad_gcpad");
-			loadXMLController(btnmap[CTRL_PAD][CTRLR_WIIMOTE], "btnmap_pad_wiimote");
-			loadXMLController(btnmap[CTRL_PAD][CTRLR_CLASSIC], "btnmap_pad_classic");
-			loadXMLController(btnmap[CTRL_PAD][CTRLR_WUPC], "btnmap_pad_wupc");
+			// Only mappings actually read from an old file need converting;
+			// controllers missing from the file keep their (already current) defaults.
+			bool lWiimote = loadXMLController(btnmap[CTRL_PAD][CTRLR_WIIMOTE], "btnmap_pad_wiimote");
+			bool lClassic = loadXMLController(btnmap[CTRL_PAD][CTRLR_CLASSIC], "btnmap_pad_classic");
+			bool lWupc = loadXMLController(btnmap[CTRL_PAD][CTRLR_WUPC], "btnmap_pad_wupc");
 			loadXMLController(btnmap[CTRL_PAD][CTRLR_WIIDRC], "btnmap_pad_wiidrc");
-			loadXMLController(btnmap[CTRL_PAD][CTRLR_NUNCHUK], "btnmap_pad_nunchuk");
+			bool lNunchuk = loadXMLController(btnmap[CTRL_PAD][CTRLR_NUNCHUK], "btnmap_pad_nunchuk");
 			loadXMLController(btnmap[CTRL_ZAPPER][CTRLR_GCPAD], "btnmap_zapper_gcpad");
-			loadXMLController(btnmap[CTRL_ZAPPER][CTRLR_WIIMOTE], "btnmap_zapper_wiimote");
+			bool lZapper = loadXMLController(btnmap[CTRL_ZAPPER][CTRLR_WIIMOTE], "btnmap_zapper_wiimote");
 
 #ifdef HW_RVL
 			if(legacyWpadLayout)
 			{
-				migrateController(btnmap[CTRL_PAD][CTRLR_WIIMOTE], swapLowHalf);
-				migrateController(btnmap[CTRL_PAD][CTRLR_NUNCHUK], swapLowHalf);
-				migrateController(btnmap[CTRL_ZAPPER][CTRLR_WIIMOTE], swapLowHalf);
-				migrateController(btnmap[CTRL_PAD][CTRLR_CLASSIC], swapHighHalf);
-				migrateController(btnmap[CTRL_PAD][CTRLR_WUPC], swapHighHalf);
+				if(lWiimote) migrateController(btnmap[CTRL_PAD][CTRLR_WIIMOTE], swapLowHalf);
+				if(lNunchuk) migrateController(btnmap[CTRL_PAD][CTRLR_NUNCHUK], swapLowHalf);
+				if(lZapper) migrateController(btnmap[CTRL_ZAPPER][CTRLR_WIIMOTE], swapLowHalf);
+				if(lClassic) migrateController(btnmap[CTRL_PAD][CTRLR_CLASSIC], swapHighHalf);
+				if(lWupc) migrateController(btnmap[CTRL_PAD][CTRLR_WUPC], swapHighHalf);
 			}
 #endif
 		}

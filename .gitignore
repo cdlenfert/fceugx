@@ -2,3 +2,10 @@
 /build_gc
 /executables
 /snes-roms/
+
+# Local game ROMs and patches (never commit)
+/*.nes
+/*.NES
+/*.ips
+/*.bps
+/sdb4players/

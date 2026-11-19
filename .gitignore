@@ -9,3 +9,6 @@
 /*.ips
 /*.bps
 /sdb4players/
+
+# macOS
+.DS_Store
